@@ -1,3 +1,78 @@
+---
+name: council-of-llms
+emoji: 🏛️
+description: Multi-model deliberation for high-stakes decisions. Don't take one model's word for it.
+details: |
+  **Council of LLMs** orchestrates structured multi-model debate — routing a single question to multiple LLMs simultaneously, collecting their answers, and surfacing agreements/disagreements.
+
+  ## Best For
+  - Security audits
+  - Architecture decisions  
+  - Policy analysis
+  - LLM output evaluation
+
+  ## Pre-requisites
+  - OpenClaw with 2+ LLM providers configured
+  - Recommended: Ollama Cloud for parallel execution
+
+  ## Quick Start
+
+  ```bash
+  # Run with demo question
+  council
+
+  # Run with your question
+  council "Should we use JWT or session cookies?"
+
+  # Interactive model selection
+  council --select-models "Architecture decision"
+  ```
+
+  ## Usage
+
+  ### Model Selection
+  ```bash
+  # List available models
+  council --list-models
+
+  # Explicit model list
+  council "Security audit" --models "ollama/kimi-k2.5,openai/gpt-4o"
+
+  # Use preset
+  council "Code review" --preset security
+  ```
+
+  ### Configuration
+  ```bash
+  # Sequential mode (limited hardware)
+  council "Question" --sequential
+
+  # Extended timeout
+  council "Question" --timeout 180
+
+  # Export results
+  council "Question" --output report.md
+  ```
+
+  ## Safeguards
+  - Timeout per model: 120s (configurable)
+  - Cost cap: 50K tokens
+  - Max rounds: 2
+  - Model diversity required
+  - Rate limiting
+
+  ## When NOT to Use
+  - Quick factual lookups
+  - Real-time applications
+  - Cost-sensitive products
+  - Tasks requiring consistent answers
+
+install:
+  - npm install -g clawhub
+  - clawhub install wahajahmed010/council-of-llms
+
+---
+
 # Council of LLMs
 
 Multi-model deliberation for high-stakes decisions. Don't take one model's word for it.
@@ -227,10 +302,10 @@ The skill includes automatic protections:
 
 ## When NOT to Use
 
-- Quick factual lookups (weather, definitions)
-- Real-time applications (chat bots)
-- Cost-sensitive products
-- Tasks requiring consistent answers (medical, legal)
+- Simple factual queries (weather, definitions)
+- Real-time applications (chat, support bots) where latency matters
+- Cost-sensitive products with limited API budgets
+- Tasks requiring authoritative, consistent answers (legal, medical — a council of conflicting advice is dangerous)
 
 ## License
 
