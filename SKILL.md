@@ -32,7 +32,7 @@ Each model gets a different lens:
 | Model | Perspective | Role |
 |-------|------------|------|
 | kimi-k2.6 | **Strategos** | Big-picture strategy, business impact, feasibility |
-| deepseek-v3.2 | **Analyticos** | Data quality, technical correctness, edge cases |
+| deepseek-v4-pro | **Analyticos** | Data quality, technical correctness, edge cases |
 | gemma4:31b | **Creativos** | Creative alternatives, user experience, novel approaches |
 
 ## How to Run a Council
@@ -65,7 +65,7 @@ sessions_spawn(
 sessions_spawn(
   runtime: "subagent",
   mode: "run",
-  model: "ollama/deepseek-v3.2:cloud",
+  model: "ollama/deepseek-v4-pro:cloud",
   label: "Council-Analyticos",
   lightContext: true,
   runTimeoutSeconds: 900,
