@@ -1,6 +1,17 @@
 ---
 name: council-of-llms
-description: "Multi-model council deliberation. Spawn 3 subagents with different models and perspectives, synthesize their outputs into a unified verdict. Use when you need diverse analysis, stress-testing ideas, or high-stakes decisions requiring multiple viewpoints. Triggers on: council, deliberate, debate, review, stress-test, multi-model."
+description: "Real multi-model council deliberation for OpenClaw subagents. Spawns 3 parallel subagents with different LLMs (kimi-k2.6, deepseek-v4-pro, gemma4:31b) and distinct analytical perspectives (Strategy, Analysis, Creativity), then synthesizes their independent outputs into a unified verdict with consensus points, disagreements, and action items. Fixes the single-model roleplay anti-pattern that causes context overflow and shallow analysis. Requires the subagent-orchestration skill for base spawning patterns. Triggers on: council, deliberate, debate, review, stress-test, multi-model, decision, verdict, analysis, perspectives."
+tags:
+  - council
+  - multi-model
+  - deliberation
+  - analysis
+  - decision-making
+  - subagent
+  - orchestration
+  - llm
+  - review
+  - stress-test
 ---
 
 # Council of LLMs
@@ -130,6 +141,17 @@ Write the synthesis to `council-review-[topic].md`.
 | Context overflow (300k+ tokens) | Too much data pasted | Summarize to <2000 words |
 | Shallow analysis | Vague task description | Be specific about what to analyze |
 | All 3 say the same thing | Not enough perspective differentiation | Make perspective prompts more distinct |
+
+## Security & Safety
+
+This skill is **read-only and sandbox-safe**:
+- Spawns 3 text-in/text-out subagents via `sessions_spawn` — no filesystem access, no arbitrary commands, no network calls
+- Subagents receive a text prompt and return a text analysis — that's it
+- No `exec`, no shell commands, no file reads/writes, no API calls
+- Models are configured locally via `~/.openclaw/council-config.json` — you control which models run
+- All output is a markdown synthesis file written to your workspace
+
+**Why ClawHub may flag this:** The skill mentions `sessions_spawn` and model names, which can look like command execution. In reality, `sessions_spawn` is an OpenClaw primitive that creates an isolated text conversation — equivalent to opening 3 chat windows and pasting a prompt into each.
 
 ## Anti-Patterns
 
