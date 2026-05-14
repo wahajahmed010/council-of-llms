@@ -1,6 +1,6 @@
 ---
 name: council-of-llms
-description: "Real multi-model council deliberation for OpenClaw subagents. Spawns 3 parallel subagents with different LLMs (kimi-k2.6, deepseek-v4-pro, gemma4:31b) and distinct analytical perspectives (Strategy, Analysis, Creativity), then synthesizes their independent outputs into a unified verdict with consensus points, disagreements, and action items. Fixes the single-model roleplay anti-pattern that causes context overflow and shallow analysis. Requires the subagent-orchestration skill for base spawning patterns. Triggers on: council, deliberate, debate, review, stress-test, multi-model, decision, verdict, analysis, perspectives."
+description: "Real multi-model council deliberation for OpenClaw subagents. Spawns 3 parallel subagents with different LLMs and distinct analytical perspectives (Strategy, Analysis, Creativity), then synthesizes their independent outputs into a unified verdict with consensus points, disagreements, and action items. Fixes the single-model roleplay anti-pattern that causes context overflow and shallow analysis. Requires the subagent-orchestration skill for base spawning patterns. Triggers on: council, deliberate, debate, review, stress-test, multi-model, decision, verdict, analysis, perspectives."
 tags:
   - council
   - multi-model
@@ -22,13 +22,33 @@ A real council spawns **3 parallel subagents**, each with a different model and 
 
 ## Models
 
-Read from `~/.openclaw/council-config.json`:
+Configure your council models in `~/.openclaw/council-config.json`:
 
 ```json
 {
   "council_models": [
+    "your-strategic-model",
+    "your-analytical-model",
+    "your-creative-model"
+  ],
+  "default_timeout": 900,
+  "max_tokens": 8192
+}
+```
+
+**Choose models with different strengths:**
+- **Strategos (Strategic):** Pick a model known for strategic thinking, long-context reasoning, and business insight
+- **Analyticos (Analytical):** Pick a model known for data analysis, technical precision, and logical reasoning
+- **Creativos (Creative):** Pick a model known for creative thinking, novel perspectives, and user empathy
+
+The more diverse the models, the better the council output. Using the same model for all three defeats the purpose.
+
+**Example configuration:**
+```json
+{
+  "council_models": [
     "ollama/kimi-k2.6:cloud",
-    "ollama/deepseek-v3.2:cloud",
+    "ollama/deepseek-v4-pro:cloud",
     "ollama/gemma4:31b-cloud"
   ],
   "default_timeout": 900,
@@ -38,13 +58,13 @@ Read from `~/.openclaw/council-config.json`:
 
 ## Perspectives
 
-Each model gets a different lens:
+Each model gets a different analytical lens:
 
-| Model | Perspective | Role |
-|-------|------------|------|
-| kimi-k2.6 | **Strategos** | Big-picture strategy, business impact, feasibility |
-| deepseek-v4-pro | **Analyticos** | Data quality, technical correctness, edge cases |
-| gemma4:31b | **Creativos** | Creative alternatives, user experience, novel approaches |
+| Perspective | Role | Focus |
+|------------|------|-------|
+| **Strategos** | Strategic analyst | Big-picture strategy, business impact, feasibility, ROI |
+| **Analyticos** | Data & logic analyst | Technical correctness, edge cases, data quality, consistency |
+| **Creativos** | Creative thinker | Novel alternatives, user experience, unconventional approaches |
 
 ## How to Run a Council
 
@@ -54,58 +74,57 @@ Gather all relevant data BEFORE spawning. Council agents cannot browse the web o
 
 ### Step 2: Spawn 3 Parallel Subagents
 
+Read the model names from `council-config.json` and spawn each with a different perspective:
+
 ```
 sessions_spawn(
   runtime: "subagent",
   mode: "run",
-  model: "ollama/kimi-k2.6:cloud",
+  model: <first model from config>,
   label: "Council-Strategos",
   lightContext: true,
-  runTimeoutSeconds: 900,
+  runTimeoutSeconds: <default_timeout from config>,
   task: "You are Strategos, a strategic analyst. [PASTE CONTEXT HERE]
-  
+
   Analyze from a STRATEGIC perspective:
   - Business impact and feasibility
-  - Market positioning and competitive advantage
   - Resource requirements and ROI
   - Strategic risks and opportunities
-  
+
   Return your analysis as a structured review with: verdict, conditions, risks, recommendations."
 )
 
 sessions_spawn(
   runtime: "subagent",
   mode: "run",
-  model: "ollama/deepseek-v4-pro:cloud",
+  model: <second model from config>,
   label: "Council-Analyticos",
   lightContext: true,
-  runTimeoutSeconds: 900,
+  runTimeoutSeconds: <default_timeout from config>,
   task: "You are Analyticos, a data and logic analyst. [PASTE CONTEXT HERE]
-  
+
   Analyze from an ANALYTICAL perspective:
   - Data quality and completeness
   - Technical correctness and edge cases
-  - Statistical validity and sample sizes
-  - Logical consistency and contradictions
-  
+  - Logical consistency
+
   Return your analysis as a structured review with: verdict, conditions, risks, recommendations."
 )
 
 sessions_spawn(
   runtime: "subagent",
   mode: "run",
-  model: "ollama/gemma4:31b-cloud",
+  model: <third model from config>,
   label: "Council-Creativos",
   lightContext: true,
-  runTimeoutSeconds: 900,
-  task: "You are Creativos, a creative and UX thinker. [PASTE CONTEXT HERE]
-  
+  runTimeoutSeconds: <default_timeout from config>,
+  task: "You are Creativos, a creative thinker. [PASTE CONTEXT HERE]
+
   Analyze from a CREATIVE perspective:
-  - User experience and usability
   - Novel alternatives and unconventional approaches
-  - Design and presentation improvements
+  - User experience and usability
   - What's missing that no one else would think of
-  
+
   Return your analysis as a structured review with: verdict, conditions, risks, recommendations."
 )
 ```
@@ -127,7 +146,7 @@ Write the synthesis to `council-review-[topic].md`.
 1. **Paste ALL context inline** — agents have no conversation history
 2. **Keep task descriptions under 2000 words** — longer = context overflow = failure
 3. **Use `lightContext: true`** — always, to prevent context bloat
-4. **Set `runTimeoutSeconds: 900`** — councils need time
+4. **Set `runTimeoutSeconds` from config** — default 900, increase for complex topics
 5. **Don't spawn with too much data** — if pasting 10k+ words, summarize first
 6. **Wait for ALL 3 to complete** — don't synthesize with 2/3 results
 7. **Never re-spawn** — if one model times out, note it in the synthesis
@@ -148,15 +167,13 @@ This skill is **read-only and sandbox-safe**:
 - Spawns 3 text-in/text-out subagents via `sessions_spawn` — no filesystem access, no arbitrary commands, no network calls
 - Subagents receive a text prompt and return a text analysis — that's it
 - No `exec`, no shell commands, no file reads/writes, no API calls
-- Models are configured locally via `~/.openclaw/council-config.json` — you control which models run
+- Models are configured locally — you control which models run
 - All output is a markdown synthesis file written to your workspace
-
-**Why ClawHub may flag this:** The skill mentions `sessions_spawn` and model names, which can look like command execution. In reality, `sessions_spawn` is an OpenClaw primitive that creates an isolated text conversation — equivalent to opening 3 chat windows and pasting a prompt into each.
 
 ## Anti-Patterns
 
-- ❌ Spawning one subagent and asking it to "be 3 experts" — that's roleplay, not a council
-- ❌ Pasting 10k+ words of raw data — summarize first
-- ❌ Using the same model for all 3 perspectives — defeats the purpose
-- ❌ Synthesizing before all 3 complete — wait for everyone
-- ❌ Ignoring disagreements — disagreements are the most valuable output
+- Spawning one subagent and asking it to "be 3 experts" — that's roleplay, not a council
+- Pasting 10k+ words of raw data — summarize first
+- Using the same model for all 3 perspectives — defeats the purpose
+- Synthesizing before all 3 complete — wait for everyone
+- Ignoring disagreements — disagreements are the most valuable output
